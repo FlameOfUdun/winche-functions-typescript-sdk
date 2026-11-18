@@ -12,9 +12,16 @@ a peer dependency: the project pins both. They're published as `@winche-technolo
     "@winche/functions": "npm:@winche-technologies/winche-functions@^3",
     "@winche/functions/testing": "npm:@winche-technologies/winche-functions@^3/testing",
     "@winche/admin": "npm:@winche-technologies/winche-admin@^3"
+  },
+  "minimumDependencyAge": {
+    "age": "P1D",
+    "exclude": ["npm:@winche-technologies/winche-functions", "npm:@winche-technologies/winche-admin"]
   }
 }
 ```
+
+The exemption lets a new SDK version be used at once (Deno otherwise waits a day before installing a new npm version);
+every other package keeps the wait.
 
 ```ts
 import { callable, onDocument, schedule, secrets, HttpsError } from "@winche/functions";
