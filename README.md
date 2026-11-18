@@ -1,16 +1,17 @@
-# Winche functions TypeScript SDK (`@winche/functions`)
+# Winche functions TypeScript SDK (`@winche-technologies/functions`)
 
 Write Winche functions: triggers, callables, HTTP functions, schedules and console pages, with their secrets and
-resources. Their data comes from [`@winche/admin`](https://github.com/FlameOfUdun/winche-admin-typescript-sdk), a peer
-dependency: the project pins both.
+resources. Their data comes from [`@winche-technologies/admin`](https://github.com/FlameOfUdun/winche-admin-typescript-sdk),
+a peer dependency: the project pins both. They're published as `@winche-technologies/…` and imported as `@winche/…`
+(aliases in deno.json).
 
 ```json
 // deno.json in the functions folder
 {
   "imports": {
-    "@winche/functions": "npm:@winche/functions@^3",
-    "@winche/functions/testing": "npm:@winche/functions@^3/testing",
-    "@winche/admin": "npm:@winche/admin@^3"
+    "@winche/functions": "npm:@winche-technologies/functions@^3",
+    "@winche/functions/testing": "npm:@winche-technologies/functions@^3/testing",
+    "@winche/admin": "npm:@winche-technologies/admin@^3"
   }
 }
 ```
@@ -46,7 +47,7 @@ it refuses the deployment, saying which version to use.
 ## Develop
 
 `npm run build` (TypeScript) makes `dist/`; `npm test` builds and runs the Deno tests in `test/` against it. The
-`@winche/admin` it builds and tests against is the sibling repository (`../winche-admin-typescript-sdk`).
+`@winche-technologies/admin` it builds and tests against is the sibling repository (`../winche-admin-typescript-sdk`).
 
 ## License
 

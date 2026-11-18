@@ -3,7 +3,7 @@
  * @winche/functions — write Winche functions.
  *
  *   import { onDocument, callable, schedule, secrets } from "@winche/functions";
- *   import { documents, FieldValue } from "@winche/admin";
+ *   import { documents, FieldValue } from "@winche-technologies/admin";
  *
  *   export const onVisit = onDocument.created("patients/{patientId}/visits/{visitId}", async (e, ctx) => {
  *     await documents.doc(`patients/${e.params.patientId}`).update({ lastVisit: e.data.get("at"), visits: FieldValue.increment(1) });
@@ -22,8 +22,8 @@
 import {
   type Call, type Json, type DocumentData, WincheError, DocumentReference, DocumentSnapshot, ChildReference, FileSnapshot, UserReference, UserSnapshot,
   decodeFields, encodeValue, fileData, userData,
-} from "@winche/admin";
-export type { Json } from "@winche/admin";
+} from "@winche-technologies/admin";
+export type { Json } from "@winche-technologies/admin";
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // Context and events
