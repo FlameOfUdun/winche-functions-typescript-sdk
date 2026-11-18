@@ -1,6 +1,6 @@
-import { callable, secrets, resources } from "@winche/functions";
-import { documents } from "@winche/admin";
-import { withSecrets, withResources, withServer, testContext } from "@winche/functions/testing";
+import { callable, secrets, resources } from "@winche-technologies/winche-functions";
+import { documents } from "@winche-technologies/winche-admin";
+import { withSecrets, withResources, withServer, testContext } from "@winche-technologies/winche-functions/testing";
 const key = secrets.define("MAIL_KEY");
 const logo = resources.define("a.txt");
 export const send = callable(async (d: { p: string }) => ({ key: key.value(), a: await logo.text(), doc: (await documents.doc(d.p).get()).get("x") }), { secrets: [key] });
