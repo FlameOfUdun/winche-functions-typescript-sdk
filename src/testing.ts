@@ -10,7 +10,7 @@
  * don't run tests in parallel that give different ones).
  */
 
-import { initializeAdmin, type AdminOptions, type Call } from "@winche-technologies/admin";
+import { initializeAdmin, type AdminOptions, type Call } from "@winche-technologies/winche-admin";
 import type { Caller, Context } from "./index.js";
 
 interface TestRun {
