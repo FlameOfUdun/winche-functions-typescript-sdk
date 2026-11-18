@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "@winche/functions": "../dist/index.js",
+    "@winche/functions/testing": "../dist/testing.js",
+    "@winche/admin": "../node_modules/@winche/admin/dist/index.js"
+  }
+}
