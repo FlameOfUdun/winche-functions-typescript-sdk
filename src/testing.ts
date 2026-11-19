@@ -103,6 +103,6 @@ export function withServer<R>(server: AdminOptions | Call, fn: () => R | Promise
 }
 
 /** A context for calling a function's `run` in a test: its name, an optional caller, logs to the console. */
-export function testContext(options?: { name?: string; caller?: Caller | null }): Context {
-  return { name: options?.name ?? "test", caller: options?.caller ?? null, log: (...a: unknown[]) => console.log(...a) };
+export function testContext(options?: { name?: string; caller?: Caller | null; byServer?: boolean }): Context {
+  return { name: options?.name ?? "test", caller: options?.caller ?? null, byServer: options?.byServer ?? false, log: (...a: unknown[]) => console.log(...a) };
 }

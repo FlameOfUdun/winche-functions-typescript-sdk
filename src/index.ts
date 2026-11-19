@@ -142,6 +142,12 @@ export interface Context {
   name: string;
   /** For callables: who called (null when signed out). Act as them with `as(ctx.caller)` from @winche-technologies/winche-admin. */
   caller: Caller | null;
+  /**
+   * Whether the server itself called: another function (`functions.call`), a run from the console, a server with the
+   * admin SDK, a trigger or schedule. False for apps (signed in or not) and HTTP requests: a callable only the
+   * project's own code may use checks it.
+   */
+  byServer: boolean;
   /** Writes to the server's logs (Logs → functions); console.log does too. */
   log(...args: unknown[]): void;
 }
@@ -151,12 +157,14 @@ interface RawContext {
   call: Call;
   functionName: string;
   auth: Caller | null;
+  /** The server's own call (absent before 3.1: false). */
+  server?: boolean;
   log(...args: unknown[]): void;
 }
 
 /** @internal The context a handler gets. */
 export function contextOf(raw: RawContext): Context {
-  return { name: raw.functionName, caller: raw.auth ?? null, log: raw.log };
+  return { name: raw.functionName, caller: raw.auth ?? null, byServer: raw.server === true, log: raw.log };
 }
 
 /** A document as a change event carries it (plain fields beside typed ones). @internal */
