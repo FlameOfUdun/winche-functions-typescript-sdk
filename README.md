@@ -44,6 +44,11 @@ export const nightly = schedule("0 2 * * *", async () => {
 `winche functions init` (the Winche CLI) writes that `deno.json`, and `winche functions deploy` sends the folder; the
 server bundles it with the versions it names. The whole API is in Winche.Functions' README.
 
+**Plugins:** a package of functions projects install under ids of their own, with settings and secrets from its
+`winche-plugin.json`, is a default export made with `plugin((p) => ({ … }))`: `p.id`, `p.setting(name)`,
+`p.secret(name)` (each installed copy's own secret). Its functions are called `<id>.<name>`. Tests call
+`thePlugin.install({ id, settings, secrets })` for a copy's functions. See Winche.Functions' README (Plugins).
+
 **Tests:** `@winche-technologies/winche-functions/testing` runs a function's code without a server: `withSecrets`, `withResources`,
 `withServer` (a stand-in or a real server for `@winche-technologies/winche-admin`), `testContext`.
 

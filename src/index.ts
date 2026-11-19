@@ -542,3 +542,100 @@ export const http = {
   onRequest: (handler: (req: HttpRequest, ctx: Context) => Response | string | Json | void | Promise<Response | string | Json | void>, options?: HttpOptions) =>
     define({ kind: "http", events: options?.methods }, handler, options),
 };
+
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// Plugins
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * An installed copy of a plugin, as its functions see it: the id it was installed under, the settings the installer
+ * gave (the ones its winche-plugin.json lists, with their defaults), and its secrets.
+ */
+export interface PluginInstance {
+  /** The id it's installed under (e.g. "sms"): its functions are called "sms.send", …. */
+  readonly id: string;
+  /** Every setting its winche-plugin.json lists, as the installer set it (or its default). */
+  readonly settings: { readonly [name: string]: Json };
+  /** One setting's value; throws for a name winche-plugin.json doesn't list. */
+  setting<T extends Json = Json>(name: string): T;
+  /**
+   * One of its secrets (a name winche-plugin.json lists, e.g. "AUTH_TOKEN"): a handle to list in a function's
+   * `secrets` and read with `value()`, as for `secrets.define`. Each installed copy has its own (the project's secret
+   * `SMS__AUTH_TOKEN` for the copy installed as "sms").
+   */
+  secret(name: string): Secret;
+}
+
+/** @internal How the server installs a plugin: what its wrapper module passes. */
+export interface PluginInstallation {
+  id: string;
+  settings: { [name: string]: Json };
+  /** The plugin's secret names → the project secrets they are for this copy. */
+  secrets: { [name: string]: string };
+}
+
+/** A plugin package's default export: its functions, made for each installed copy. */
+export interface Plugin {
+  readonly __wincheplugin: 1;
+  /** Makes one installed copy's functions (the server does, for each copy). Tests can call it too. */
+  install(installation: PluginInstallation): PluginFunctions;
+}
+
+/** @internal One installed copy's functions, as the server finds them. */
+export interface PluginFunctions {
+  readonly __wincheGroup: 1;
+  readonly id: string;
+  readonly functions: { readonly [name: string]: WincheFunction<any, any> };
+}
+
+const PLUGIN_FUNCTION = /^[A-Za-z_$][A-Za-z0-9_$]{0,63}$/;
+
+/**
+ * Defines a plugin: functions that projects install, configure and upgrade from the console or winche.json instead
+ * of writing them. The package's default export; its winche-plugin.json lists the settings and secrets an installer
+ * gives. `make` runs once for each installed copy and returns its functions by name:
+ *
+ *   export default plugin((p) => {
+ *     const token = p.secret("AUTH_TOKEN");
+ *     return {
+ *       send: callable(async (data: { to: string; body: string }, ctx) => { … token.value() … p.setting("FROM") … }, { secrets: [token] }),
+ *       queued: onDocument.created(`${p.setting("QUEUE")}/{id}`, async (e) => { … }, { secrets: [token] }),
+ *     };
+ *   });
+ *
+ * Apps call a copy's callables by its id: functions.call("sms.send", { … }).
+ */
+export function plugin(make: (p: PluginInstance) => { [name: string]: WincheFunction<any, any> }): Plugin {
+  if (typeof make !== "function") throw new Error("plugin: give a function that returns the plugin's functions, e.g. plugin((p) => ({ send: callable(…) })).");
+  return Object.freeze({
+    __wincheplugin: 1 as const,
+    install(installation: PluginInstallation): PluginFunctions {
+      const { id, settings = {}, secrets: names = {} } = installation ?? ({} as PluginInstallation);
+      const handles = new Map<string, Secret>();
+      const instance: PluginInstance = Object.freeze({
+        id,
+        settings: Object.freeze({ ...settings }),
+        setting<T extends Json = Json>(name: string): T {
+          if (!Object.hasOwn(settings, name)) throw new Error(`The plugin has no setting ${name}: list it in its winche-plugin.json.`);
+          return settings[name] as T;
+        },
+        secret(name: string): Secret {
+          if (!Object.hasOwn(names, name)) throw new Error(`The plugin has no secret ${name}: list it in its winche-plugin.json.`);
+          let handle = handles.get(name);
+          if (!handle) handles.set(name, handle = secrets.define(names[name]));
+          return handle;
+        },
+      });
+      const made = make(instance);
+      if (!made || typeof made !== "object") throw new Error("plugin: make returns the plugin's functions by name, e.g. { send: callable(…) }.");
+      const functions: { [name: string]: WincheFunction<any, any> } = {};
+      for (const [name, fn] of Object.entries(made)) {
+        if (!PLUGIN_FUNCTION.test(name)) throw new Error(`plugin: '${name}' isn't a function name (letters and digits).`);
+        if (!fn || typeof (fn as WincheFunction).__winche !== "number") throw new Error(`plugin: ${name} isn't a function (callable, onDocument.created, http.onRequest, …).`);
+        if ((fn as WincheFunction).trigger.kind === "consolePage") throw new Error(`plugin: ${name}: plugins can't add console pages.`);
+        functions[name] = fn;
+      }
+      return Object.freeze({ __wincheGroup: 1 as const, id, functions: Object.freeze(functions) });
+    },
+  });
+}
