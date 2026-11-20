@@ -64,7 +64,7 @@ const SECRET_NAME = /^[A-Z][A-Z0-9_]{0,127}$/;
 
 /**
  * A secret the deployment uses (an API key, a password), set in the console (the Secrets page) or with
- * `winche functions secrets:set NAME`. Declared once (`secrets.define("NAME")`) and given to the functions that read it
+ * `winche secrets:set NAME`. Declared once (`secrets.define("NAME")`) and given to the functions that read it
  * (`{ secrets: [handle] }` in their options). Values are hidden in the functions' logs.
  */
 export interface Secret {
