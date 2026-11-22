@@ -62,8 +62,8 @@ export const pay = callable(async (data: { amount: number }, ctx) => { /* ctx.ap
 **Tests:** `@winche-technologies/winche-functions/testing` runs a function's code without a server: `withSecrets`, `withResources`,
 `withServer` (a stand-in or a real server for `@winche-technologies/winche-admin`), `testContext`.
 
-**Protocol:** exported functions carry the protocol they were written for (`__winche: 1`); a server that doesn't speak
-it refuses the deployment, saying which version to use.
+**Protocol:** exported functions carry the protocol they were written for (`__winche: 1`, or `2` for a callable with
+`{ integrity: true }`); a server that doesn't speak it refuses the deployment, saying which version to use.
 
 ## Changes
 
