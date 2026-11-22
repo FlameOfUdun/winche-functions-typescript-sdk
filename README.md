@@ -44,6 +44,15 @@ export const nightly = schedule("0 2 * * *", async () => {
 `winche functions init` (the Winche CLI) writes that `deno.json`, and `winche functions deploy` sends the folder; the
 server bundles it with the versions it names. The whole API is in Winche.Functions' README.
 
+**Integrity:** `ctx.app` is the app that proved it's the project's own (`{ id, provider }`: App Attest, Play
+Integrity, the browser check or a debug token), or null. A callable with `{ integrity: true }` answers only such apps
+(others get `permission-denied`, reason `integrity-required`), whatever the project enforces; the project's own code
+calls it as ever:
+
+```ts
+export const pay = callable(async (data: { amount: number }, ctx) => { /* ctx.app!.id */ }, { integrity: true });
+```
+
 **Plugins:** a package of functions projects install under ids of their own, with settings and secrets from its
 `winche-plugin.json`, is a default export made with `plugin((p) => ({ … }))`: `p.id`, `p.setting(name)`,
 `p.secret(name)` (each installed copy's own secret). Its functions are called `<id>.<name>`. Tests call

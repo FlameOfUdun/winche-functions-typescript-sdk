@@ -11,7 +11,7 @@
  */
 
 import { initializeAdmin, type AdminOptions, type Call } from "@winche-technologies/winche-admin";
-import type { Caller, Context } from "./index.js";
+import type { AppProof, Caller, Context } from "./index.js";
 
 interface TestRun {
   call?: Call;
@@ -103,6 +103,7 @@ export function withServer<R>(server: AdminOptions | Call, fn: () => R | Promise
 }
 
 /** A context for calling a function's `run` in a test: its name, an optional caller, logs to the console. */
-export function testContext(options?: { name?: string; caller?: Caller | null; byServer?: boolean }): Context {
-  return { name: options?.name ?? "test", caller: options?.caller ?? null, byServer: options?.byServer ?? false, log: (...a: unknown[]) => console.log(...a) };
+export function testContext(options?: { name?: string; caller?: Caller | null; byServer?: boolean; app?: AppProof | null }): Context {
+  return { name: options?.name ?? "test", caller: options?.caller ?? null, byServer: options?.byServer ?? false, app: options?.app ?? null,
+    log: (...a: unknown[]) => console.log(...a) };
 }

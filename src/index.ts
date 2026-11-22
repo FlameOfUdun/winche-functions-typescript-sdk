@@ -148,8 +148,21 @@ export interface Context {
    * project's own code may use checks it.
    */
   byServer: boolean;
+  /**
+   * For callables: the app that proved it's the project's own (Integrity: App Attest, Play Integrity, the browser
+   * check, a debug token), or null (no valid Integrity token, or the server's own call). Absent before Winche Server 4.
+   */
+  app: AppProof | null;
   /** Writes to the server's logs (Logs → functions); console.log does too. */
   log(...args: unknown[]): void;
+}
+
+/** An app's proof that it's the project's own: its id in the project, and how it proved itself. */
+export interface AppProof {
+  /** The app's id (Integrity in the console). */
+  id: string;
+  /** How: "appAttest", "playIntegrity", "turnstile" or "debug". */
+  provider: "appAttest" | "playIntegrity" | "turnstile" | "debug" | (string & {});
 }
 
 /** @internal What the runtime hands a run. */
@@ -159,12 +172,14 @@ interface RawContext {
   auth: Caller | null;
   /** The server's own call (absent before 3.1: false). */
   server?: boolean;
+  /** The app's Integrity proof (absent before 3.2: null). */
+  app?: AppProof | null;
   log(...args: unknown[]): void;
 }
 
 /** @internal The context a handler gets. */
 export function contextOf(raw: RawContext): Context {
-  return { name: raw.functionName, caller: raw.auth ?? null, byServer: raw.server === true, log: raw.log };
+  return { name: raw.functionName, caller: raw.auth ?? null, byServer: raw.server === true, app: raw.app ?? null, log: raw.log };
 }
 
 /** A document as a change event carries it (plain fields beside typed ones). @internal */
@@ -371,6 +386,16 @@ export interface FunctionOptions {
   isolate?: boolean;
 }
 
+/** A callable's options: a function's, and whether only the project's own apps may call it. */
+export interface CallableOptions extends FunctionOptions {
+  /**
+   * Only apps that prove they're the project's own (a valid Integrity token) may call it: others get
+   * permission-denied (reason integrity-required), whatever the project enforces. The project's own code (other
+   * functions, the console, the admin SDK) calls it as ever. Needs Winche Server 4.
+   */
+  integrity?: boolean;
+}
+
 /** A JSON Schema, e.g. { type: "object", properties: { lang: { enum: ["en", "de"] } }, required: ["lang"] }. */
 export type JsonSchema = { [keyword: string]: Json };
 
@@ -523,7 +548,7 @@ export const schedule = (cron: string, handler: Handler<ScheduleEvent>, options?
   define({ kind: "schedule", cron, timeZone: options?.timeZone }, handler, options);
 
 /** Called by apps (the SDKs' functions.call("name", data)); returns JSON to the caller. */
-export const callable = <D = Json, R = Json>(handler: (data: D, ctx: Context) => R | Promise<R>, options?: FunctionOptions) =>
+export const callable = <D = Json, R = Json>(handler: (data: D, ctx: Context) => R | Promise<R>, options?: CallableOptions) =>
   define<D, R>({ kind: "callable" }, handler, options);
 
 /**
