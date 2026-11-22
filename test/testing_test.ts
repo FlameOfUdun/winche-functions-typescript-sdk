@@ -12,3 +12,10 @@ Deno.test("helpers", async () => {
   let msg = ""; try { key.value(); } catch (e) { msg = (e as Error).message; }
   if (!msg.includes("outside a function's run")) throw new Error(msg);
 });
+
+Deno.test("a callable only the project's apps may call is marked so servers from before Integrity refuse it", () => {
+  const open = callable(() => "hi");
+  const own = callable(() => "hi", { integrity: true });
+  if (open.__winche !== 1) throw new Error(`open: protocol ${open.__winche}`);
+  if (own.__winche !== 2) throw new Error(`own apps only: protocol ${own.__winche}`);
+});

@@ -47,7 +47,8 @@ server bundles it with the versions it names. The whole API is in Winche.Functio
 **Integrity:** `ctx.app` is the app that proved it's the project's own (`{ id, provider }`: App Attest, Play
 Integrity, the browser check or a debug token), or null. A callable with `{ integrity: true }` answers only such apps
 (others get `permission-denied`, reason `integrity-required`), whatever the project enforces; the project's own code
-calls it as ever:
+calls it as ever. It needs Winche Server 4: a server from before Integrity refuses to deploy it ("protocol 2") rather
+than let anyone call it.
 
 ```ts
 export const pay = callable(async (data: { amount: number }, ctx) => { /* ctx.app!.id */ }, { integrity: true });
@@ -63,6 +64,12 @@ export const pay = callable(async (data: { amount: number }, ctx) => { /* ctx.ap
 
 **Protocol:** exported functions carry the protocol they were written for (`__winche: 1`); a server that doesn't speak
 it refuses the deployment, saying which version to use.
+
+## Changes
+
+- **3.2.0:** `ctx.app` (the app that proved it's the project's own) and `{ integrity: true }` for callables (Winche
+  Server 4). A callable with it is marked protocol 2, which servers from before Integrity refuse; everything else is
+  unchanged and deploys anywhere 3.x does.
 
 ## Develop
 

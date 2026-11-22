@@ -391,7 +391,7 @@ export interface CallableOptions extends FunctionOptions {
   /**
    * Only apps that prove they're the project's own (a valid Integrity token) may call it: others get
    * permission-denied (reason integrity-required), whatever the project enforces. The project's own code (other
-   * functions, the console, the admin SDK) calls it as ever. Needs Winche Server 4.
+   * functions, the console, the admin SDK) calls it as ever. Needs Winche Server 4: older servers refuse to deploy it (it's marked protocol 2).
    */
   integrity?: boolean;
 }
@@ -455,7 +455,8 @@ export type Trigger =
 
 /** What an exported function is: Winche reads these when the code is deployed. */
 export interface WincheFunction<A = unknown, R = unknown> {
-  __winche: 1;
+  /** The protocol: 1, or 2 for a callable only the project's apps may call, so servers from before Integrity refuse it. */
+  __winche: 1 | 2;
   trigger: Trigger;
   options: FunctionOptions;
   /** @internal Called by the runtime with what the server sent and the run's raw context. */
@@ -477,7 +478,7 @@ function optionsOut(options: FunctionOptions | undefined): FunctionOptions {
 }
 
 const define = <A, R>(trigger: Trigger, run: (arg: A, ctx: Context) => R | Promise<R>, options: FunctionOptions = {}): WincheFunction<A, R> => ({
-  __winche: 1, trigger, options: optionsOut(options), run,
+  __winche: (options as { integrity?: boolean } | undefined)?.integrity === true ? 2 : 1, trigger, options: optionsOut(options), run,
   handler: async (arg: unknown, raw: never) => {
     const r = raw as unknown as RawContext;
     return changesOut(trigger, await run(eventOf(trigger, arg, r.call) as A, contextOf(r)));
