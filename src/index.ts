@@ -278,6 +278,19 @@ export interface BeforeSignInEvent {
 }
 
 /** A release published (released) or a channel pointed at a release (channelMoved). */
+/** A Realtime list closed (by hand, by a function, or idle): what it holds. */
+export interface RealtimeClosedEvent {
+  type: "closed";
+  /** The list's path, e.g. sessions/s1. */
+  path: string;
+  /** The path pattern's captures ({session} → params.session). */
+  params: { [name: string]: string };
+  /** The list as it closed. */
+  list: { path: string; count: number; bytes: number; openedAt: Date; closedAt: Date | null };
+  id: string;
+  at: Date;
+}
+
 export interface AssetEvent {
   type: "released" | "channelMoved";
   /** The release published, or the one the channel points at now. */
@@ -315,6 +328,11 @@ function eventOf(trigger: Trigger, a: any, call: Call): unknown {
       return { scheduledAt: new Date(a.scheduledAt), id: a.id };
     case "assets":
       return { type: a.type, release: a.release, channel: a.channel ?? null, note: a.note ?? null, by: a.by ?? null, id: a.id, at: new Date(a.at) };
+    case "realtime":
+      return {
+        type: a.type, path: a.path, params: a.params ?? {}, id: a.id, at: new Date(a.at),
+        list: { ...a.list, openedAt: new Date(a.list?.openedAt), closedAt: a.list?.closedAt ? new Date(a.list.closedAt) : null },
+      };
     case "before":
       if (trigger.on === "documents")
         return { operation: a.operation, path: a.path, params: a.params ?? {}, caller: a.auth ?? null,
@@ -448,6 +466,7 @@ export type Trigger =
   | { kind: "users"; events: string[] }
   | { kind: "schedule"; cron: string; timeZone?: string }
   | { kind: "assets"; events: string[]; channel?: string }
+  | { kind: "realtime"; events: string[]; path?: string }
   | { kind: "callable" }
   | { kind: "consolePage" }
   | { kind: "http"; events?: string[] }
@@ -543,6 +562,17 @@ export const onAssets = {
 const assetTrigger = (events: string[], handler: Handler<AssetEvent>, options?: FunctionOptions & { channel?: string }) =>
   define<AssetEvent, unknown>({ kind: "assets", events, channel: options?.channel },
     (e, ctx) => (options?.channel && e.channel !== options.channel ? null : handler(e, ctx)), options);
+
+/**
+ * Realtime triggers: a list closed (by hand, by a function, or idle: build the session's outcome from it). With a path
+ * pattern (`sessions/{session}`), only those lists'. Needs Winche Server 4.1.
+ */
+export const onRealtime = {
+  closed: (pathOrHandler: string | Handler<RealtimeClosedEvent>, handler?: Handler<RealtimeClosedEvent> | FunctionOptions, options?: FunctionOptions) =>
+    typeof pathOrHandler === "string"
+      ? define<RealtimeClosedEvent, unknown>({ kind: "realtime", events: ["closed"], path: pathOrHandler }, handler as Handler<RealtimeClosedEvent>, options)
+      : define<RealtimeClosedEvent, unknown>({ kind: "realtime", events: ["closed"] }, pathOrHandler, handler as FunctionOptions | undefined),
+};
 
 /** Runs on a schedule: a cron expression ("minute hour day month weekday"), in UTC unless timeZone is given. */
 export const schedule = (cron: string, handler: Handler<ScheduleEvent>, options?: FunctionOptions & { timeZone?: string }) =>

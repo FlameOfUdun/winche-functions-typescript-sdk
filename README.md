@@ -67,6 +67,7 @@ export const pay = callable(async (data: { amount: number }, ctx) => { /* ctx.ap
 
 ## Changes
 
+- **3.3.0:** `onRealtime.closed(path?, handler)`: runs when a Winche Realtime list closes (Winche Server 4.1).
 - **3.2.0:** `ctx.app` (the app that proved it's the project's own) and `{ integrity: true }` for callables (Winche
   Server 4). A callable with it is marked protocol 2, which servers from before Integrity refuse; everything else is
   unchanged and deploys anywhere 3.x does.

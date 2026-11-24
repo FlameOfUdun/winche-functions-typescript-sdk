@@ -19,3 +19,14 @@ Deno.test("a callable only the project's apps may call is marked so servers from
   if (open.__winche !== 1) throw new Error(`open: protocol ${open.__winche}`);
   if (own.__winche !== 2) throw new Error(`own apps only: protocol ${own.__winche}`);
 });
+
+Deno.test("a realtime trigger: closed lists, by path, with the list as the event", async () => {
+  const { onRealtime } = await import("@winche-technologies/winche-functions");
+  const outcome = onRealtime.closed("sessions/{session}", (e) => ({ session: e.params.session, items: e.list.count, closed: e.list.closedAt instanceof Date }));
+  if (JSON.stringify(outcome.trigger) !== JSON.stringify({ kind: "realtime", events: ["closed"], path: "sessions/{session}" })) throw new Error(JSON.stringify(outcome.trigger));
+  const any = onRealtime.closed(() => null);
+  if ((any.trigger as { path?: string }).path !== undefined) throw new Error("no path expected");
+  const r = await outcome.handler({ type: "closed", path: "sessions/s1", params: { session: "s1" }, id: "c1", at: "2026-01-01T00:00:00Z",
+    list: { path: "sessions/s1", count: 3, bytes: 10, openedAt: "2026-01-01T00:00:00Z", closedAt: "2026-01-01T01:00:00Z" } } as never, { functionName: "outcome", auth: null, log: () => {}, call: async () => null } as never);
+  if (JSON.stringify(r) !== JSON.stringify({ session: "s1", items: 3, closed: true })) throw new Error(JSON.stringify(r));
+});
